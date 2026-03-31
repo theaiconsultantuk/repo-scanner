@@ -71,3 +71,11 @@ Every scan ends with one of three verdicts:
 ## Scan history
 
 Results are saved to `~/.repo-scanner/scans/` as JSON files for reference.
+
+## Note on installers
+
+The macOS installer uses `curl | bash` to install Homebrew and Bun — the same method recommended in their official documentation. If you prefer, install those tools manually first and the script will skip them.
+
+## Credits
+
+See [CREDITS.md](CREDITS.md) for the full list of open-source tools this project wraps.
