@@ -239,8 +239,10 @@ function computeVerdict(result: ScanResult): void {
   }
 
   if (phase2) {
-    // GuardDog findings
-    if (typeof phase2.guarddog === "string" && phase2.guarddog.includes("malicious")) {
+    // GuardDog findings — check for actual detections, not the word "malicious" in "0 potentially malicious"
+    if (typeof phase2.guarddog === "string" &&
+        phase2.guarddog.includes("malicious") &&
+        !phase2.guarddog.match(/Found 0 potentially malicious/)) {
       result.verdict = "DO NOT INSTALL";
       result.criticalFindings.push("GuardDog detected malicious code patterns");
     }
