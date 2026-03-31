@@ -2,6 +2,21 @@
 
 Scan any GitHub repository for malicious code, secrets, vulnerabilities, and trust signals **before** downloading or installing it.
 
+> Runs eight security tools across a three-phase pipeline — remote trust checks with no download required, shallow-clone static analysis, and dependency CVE scanning — then aggregates everything into a single **SAFE / REVIEW NEEDED / DO NOT INSTALL** verdict.
+
+## How it works
+
+```
+Phase 1 — Remote (no clone)       Phase 2 — Shallow clone           Phase 3 — Verdict
+─────────────────────────         ─────────────────────────         ─────────────────
+OpenSSF Scorecard (trust/10)  →   GuardDog (malicious packages)  →  SAFE
+TruffleHog (live secrets)     →   Semgrep (1,000+ SAST rules)    →  REVIEW NEEDED
+GitHub API (age, license,     →   Gitleaks (hardcoded secrets)   →  DO NOT INSTALL
+  stars, archived)            →   OSV-Scanner + Grype (CVEs)
+```
+
+The scanner runs all Phase 1 checks in parallel (fast, ~10s), then clones at `--depth=1` to a temp directory for Phase 2, deletes the clone when done, and outputs a structured report.
+
 ## Quick Start
 
 ### macOS
