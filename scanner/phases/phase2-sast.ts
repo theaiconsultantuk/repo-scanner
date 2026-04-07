@@ -3,7 +3,7 @@ import { join } from "path";
 import { tmpdir } from "os";
 import { existsSync } from "fs";
 import { runTool, safeParseJson } from "../lib/tools.ts";
-import { filterGitleaksFindings } from "../lib/filter-fp.ts";
+import { filterGitleaksFindings, filterSemgrepFindings } from "../lib/filter-fp.ts";
 import type { Phase2Result, SastFinding, VulnFinding, ProjectType } from "../types.ts";
 
 const isJsonMode = () => process.argv.includes("--json");
@@ -116,9 +116,9 @@ export async function runPhase2(
     guarddogFindings.push("GuardDog: potentially malicious patterns detected");
   }
 
-  // Semgrep
+  // Semgrep + FP filter (strips findings in docs, skills, prompts, YAML, markdown)
   const semgrepData = safeParseJson(semgrepR.stdout);
-  const semgrepFindings: SastFinding[] = (semgrepData?.results ?? []).map((r: any) => ({
+  const semgrepRaw: SastFinding[] = (semgrepData?.results ?? []).map((r: any) => ({
     tool: "semgrep",
     severity: mapSemgrepSeverity(r.extra?.severity ?? "INFO"),
     file: (r.path ?? "").replace(scanDir + "/", ""),
@@ -126,6 +126,10 @@ export async function runPhase2(
     message: r.extra?.message ?? r.check_id ?? "unknown",
     ruleId: r.check_id,
   }));
+  const { findings: semgrepFindings, removedCount: semgrepFpRemoved } = filterSemgrepFindings(semgrepRaw);
+  if (semgrepFpRemoved > 0) {
+    log(`  Semgrep FP: ${semgrepRaw.length} raw → ${semgrepFindings.length} after filter (${semgrepFpRemoved} in docs/skills/yaml removed)`);
+  }
 
   // Gitleaks + FP filter
   const rawGitleaks = safeParseJson(gitleaksR.stdout) ?? [];
@@ -161,7 +165,7 @@ export async function runPhase2(
   // Cleanup
   await runTool("rm", ["rm", "-rf", scanDir], 30000);
 
-  log(`  Semgrep:  ${semgrepFindings.filter(f => f.severity === "HIGH" || f.severity === "CRITICAL").length} high/critical`);
+  log(`  Semgrep:  ${semgrepFindings.filter(f => f.severity === "HIGH" || f.severity === "CRITICAL").length} high/critical (${semgrepRaw.length} raw)`);
   log(`  OSV:      ${osvVulns.length} vulnerabilities`);
   log(`  Grype:    ${grypeVulns.filter(v => v.severity === "CRITICAL" || v.severity === "HIGH").length} high/critical`);
 
