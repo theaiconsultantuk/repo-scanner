@@ -1,21 +1,35 @@
-# GitHub Repository Security Scanner
+# GitHub Repository Security Scanner v2
 
 Scan any GitHub repository for malicious code, secrets, vulnerabilities, and trust signals **before** downloading or installing it.
 
-> Runs eight security tools across a three-phase pipeline — remote trust checks with no download required, shallow-clone static analysis, and dependency CVE scanning — then aggregates everything into a single **SAFE / REVIEW NEEDED / DO NOT INSTALL** verdict.
+> Runs eight security tools across a four-phase pipeline — remote trust checks with no download required, shallow-clone security analysis, code quality assessment, and an aggregated **SAFE / REVIEW NEEDED / DO NOT INSTALL** verdict with separate security and maturity scores.
+
+## What's new in v2
+
+- **Code quality phase** — 10 signals: CI/CD, test suite, README depth, SECURITY.md, CHANGELOG, TypeScript strict mode, lock files, dependency surface, suspicious CI pipelines
+- **Maturity score** (0-10) alongside the security score — know if a repo is secure *and* well-maintained
+- **AI false-positive filter** for gitleaks — strips test fixtures, placeholder values, and env-var references before reporting (inspired by [Kem's kem-sec research](https://campfire.aura-intel.net/blog/deterministic-skills))
+- **State persistence** — interrupted scans resume from the last completed phase with `--resume`
+- **Structured type contracts** — each phase outputs a validated schema
+- **Project type detection** — npm library, Python package, CLI, Go, Rust, web app — skip irrelevant checks automatically
 
 ## How it works
 
 ```
-Phase 1 — Remote (no clone)       Phase 2 — Shallow clone           Phase 3 — Verdict
-─────────────────────────         ─────────────────────────         ─────────────────
-OpenSSF Scorecard (trust/10)  →   GuardDog (malicious packages)  →  SAFE
-TruffleHog (live secrets)     →   Semgrep (1,000+ SAST rules)    →  REVIEW NEEDED
-GitHub API (age, license,     →   Gitleaks (hardcoded secrets)   →  DO NOT INSTALL
-  stars, archived)            →   OSV-Scanner + Grype (CVEs)
+Phase 1 — Remote (parallel, no clone)
+  OpenSSF Scorecard · TruffleHog · GitHub API
+        ↓
+Phase 2 — Shallow clone + security SAST (parallel)
+  GuardDog · Semgrep · Gitleaks (FP-filtered) · OSV-Scanner · Grype
+        ↓
+Phase 3 — Code quality signals (10 checks)
+  CI/CD · Tests · README · SECURITY.md · CHANGELOG
+  TypeScript strict · Lock files · Dep surface · Workflow safety
+        ↓
+Phase 4 — Aggregate + Verdict
+  Security Score (0-10)   Maturity Score (0-10)
+  SAFE / REVIEW NEEDED / DO NOT INSTALL
 ```
-
-The scanner runs all Phase 1 checks in parallel (fast, ~10s), then clones at `--depth=1` to a temp directory for Phase 2, deletes the clone when done, and outputs a structured report.
 
 ## Quick Start
 
@@ -32,11 +46,17 @@ Right-click `windows\install.bat` → Run as Administrator
 ## Usage (after install)
 
 ```bash
-# Full scan (recommended)
+# Full scan — all 4 phases (recommended)
 repo-scan https://github.com/owner/repo
 
-# Quick scan — remote only, no clone
+# Quick scan — Phase 1 remote only, no clone (~15s)
 repo-scan https://github.com/owner/repo --quick
+
+# Resume an interrupted scan
+repo-scan https://github.com/owner/repo --resume
+
+# Force fresh scan (ignore saved state)
+repo-scan https://github.com/owner/repo --fresh
 
 # Output as JSON
 repo-scan https://github.com/owner/repo --json
@@ -44,33 +64,37 @@ repo-scan https://github.com/owner/repo --json
 
 ## What it checks
 
-| Tool | What it finds |
-|------|--------------|
-| OpenSSF Scorecard | 18-point trust score — branch protection, code review, CI, signed releases |
-| TruffleHog | Live/verified secrets and credentials in repo history |
-| GuardDog | Malicious install scripts, data exfiltration, crypto miners, typosquatting |
-| Semgrep | Code vulnerabilities (1,000+ SAST rules) |
-| Gitleaks | Hardcoded secrets in source files |
-| OSV-Scanner | Known CVEs in dependencies |
-| Grype | Dependency vulnerability scan with severity grading |
+| Phase | Tool | What it finds |
+|-------|------|--------------|
+| 1 | OpenSSF Scorecard | 18-point trust score — branch protection, code review, CI, signed releases |
+| 1 | TruffleHog | Live/verified secrets and credentials in repo history |
+| 1 | GitHub API | Stars, forks, license, activity, project type detection |
+| 2 | GuardDog | Malicious install scripts, data exfiltration, crypto miners, typosquatting |
+| 2 | Semgrep | Code vulnerabilities (1,000+ SAST rules) |
+| 2 | Gitleaks | Hardcoded secrets in source files (false-positive filtered) |
+| 2 | OSV-Scanner | Known CVEs in dependencies (OSV database) |
+| 2 | Grype | Dependency vulnerability scan with severity grading |
+| 3 | Quality signals | CI, tests, docs, lock files, TypeScript strict, workflow safety |
 
 ## Verdict
 
 Every scan ends with one of three verdicts:
 
-- **SAFE** — Scorecard > 6.0, no critical findings
-- **REVIEW NEEDED** — moderate issues found, use with caution
-- **DO NOT INSTALL** — live secrets, malicious code, or critical CVEs detected
+| Verdict | Meaning |
+|---------|---------|
+| **SAFE** | Scorecard > 6.0, no critical findings, clean dependency graph |
+| **REVIEW NEEDED** | Moderate issues found — read warnings before installing |
+| **DO NOT INSTALL** | Live secrets, malicious code, or critical CVEs detected |
 
 ## Requirements
 
 - macOS: Homebrew (installed automatically if missing)
 - Windows: Windows 10/11 with winget or Scoop
-- GitHub CLI (`gh`) must be authenticated: run `gh auth login` once after install
+- GitHub CLI (`gh`) authenticated — run `gh auth login` once after install
 
 ## Scan history
 
-Results are saved to `~/.repo-scanner/scans/` as JSON files for reference.
+Results saved to `~/.repo-scanner/scans/` as JSON. Interrupted scan state at `~/.repo-scanner/state/`.
 
 ## Note on installers
 
@@ -78,4 +102,5 @@ The macOS installer uses `curl | bash` to install Homebrew and Bun — the same 
 
 ## Credits
 
-See [CREDITS.md](CREDITS.md) for the full list of open-source tools this project wraps.
+- Security tools: see [CREDITS.md](CREDITS.md)
+- v2 architecture inspired by [Kem](https://campfire.aura-intel.net) — his [kem-sec](https://github.com/aura-intel/kem-sec) tool and [research into deterministic Claude Code skills](https://campfire.aura-intel.net/blog/deterministic-skills) informed the false-positive filter, state persistence, and structured phase contracts
