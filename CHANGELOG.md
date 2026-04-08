@@ -1,5 +1,14 @@
 # Changelog
 
+## v2.1.0 — 2026-04-07
+
+### New features
+
+- **Plain-English finding explanations** — every critical and warning finding now shows a "Why it matters:" or "What this means:" sentence written for non-technical users. Covers TruffleHog verified secrets, GuardDog malware signals, shell-spawning scripts, CVE severity tiers, hardcoded secrets, low OpenSSF Scorecard, archived/abandoned repos, and more (16 patterns total)
+- **Semgrep false-positive filter** — findings in `skills/`, `prompts/`, `templates/`, `workflows/`, `.yaml`, `.yml`, `.md`, `.txt` paths are stripped before scoring. Eliminates noise from repos that are skill/prompt collections where security rules fire on example code
+
+---
+
 ## v2.0.0 — 2026-04-06
 
 ### New features
