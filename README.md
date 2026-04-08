@@ -1,14 +1,19 @@
-# GitHub Repository Security Scanner v2
+# GitHub Repository Security Scanner v2.1
 
 Scan any GitHub repository for malicious code, secrets, vulnerabilities, and trust signals **before** downloading or installing it.
 
 > Runs eight security tools across a four-phase pipeline — remote trust checks with no download required, shallow-clone security analysis, code quality assessment, and an aggregated **SAFE / REVIEW NEEDED / DO NOT INSTALL** verdict with separate security and maturity scores.
 
+## What's new in v2.1
+
+- **Plain-English explanations** — every finding now shows a "Why it matters" or "What this means" sentence written for non-technical users. No jargon — just a clear reason to act (or not)
+- **Semgrep false-positive filter** — findings inside `skills/`, `prompts/`, `templates/`, `workflows/`, `.yaml`, `.yml`, and `.md` paths are stripped before scoring. Repos that are skill/prompt collections no longer trigger false DO NOT INSTALL verdicts
+
 ## What's new in v2
 
 - **Code quality phase** — 10 signals: CI/CD, test suite, README depth, SECURITY.md, CHANGELOG, TypeScript strict mode, lock files, dependency surface, suspicious CI pipelines
 - **Maturity score** (0-10) alongside the security score — know if a repo is secure *and* well-maintained
-- **AI false-positive filter** for gitleaks — strips test fixtures, placeholder values, and env-var references before reporting (inspired by [Kem's kem-sec research](https://campfire.aura-intel.net/blog/deterministic-skills))
+- **Gitleaks false-positive filter** — strips test fixtures, placeholder values, and env-var references before reporting (inspired by [Kem's kem-sec research](https://campfire.aura-intel.net/blog/deterministic-skills))
 - **State persistence** — interrupted scans resume from the last completed phase with `--resume`
 - **Structured type contracts** — each phase outputs a validated schema
 - **Project type detection** — npm library, Python package, CLI, Go, Rust, web app — skip irrelevant checks automatically
