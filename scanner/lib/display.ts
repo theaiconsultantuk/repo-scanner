@@ -17,9 +17,6 @@ const FINDING_TRANSLATIONS: Array<[RegExp, string]> = [
     "The install script downloads and runs an executable from the internet — a risk if that URL is ever compromised."],
   [/critical CVE/i,
     "One or more known security holes (CVEs) were found in the software this depends on. Attackers have documented ways to exploit these."],
-  [/high/i + /SAST.*Semgrep|Semgrep.*SAST/i,
-    ""],  // handled below with rule-specific translations
-
   // Semgrep rule-specific
   [/spawn-shell-true|detect-child-process/i,
     "This code runs terminal/shell commands from within scripts (e.g. hook files). Not always dangerous, but it means code on your machine will be executing system commands — review what those scripts do before running them."],
