@@ -30,8 +30,6 @@ jobs:
             p/secrets
             p/javascript
             p/typescript
-        env:
-          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
 
   scorecard:
     name: OpenSSF Scorecard
