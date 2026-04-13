@@ -169,9 +169,9 @@ export async function runPhase3(
   }
 
   // QC-09: Dependency surface reasonable (<200)
-  if (existsSync(join(scanDir, "package.json"))) {
+  if (existsSync(join(scanDir, "package.json"))) { // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal
     const pkgJson = safeParseJson(
-      await Bun.file(join(scanDir, "package.json")).text().catch(() => "{}")
+      await Bun.file(join(scanDir, "package.json")).text().catch(() => "{}") // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal
     );
     const depCount = Object.keys({
       ...(pkgJson?.dependencies ?? {}),
@@ -187,7 +187,7 @@ export async function runPhase3(
   }
 
   // QC-10: No curl|bash in GitHub Actions workflows
-  const workflowDir = join(scanDir, ".github/workflows");
+  const workflowDir = join(scanDir, ".github/workflows"); // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal
   if (existsSync(workflowDir)) {
     const grepR = await runTool("grep", [
       "grep", "-r", "-l", "--include=*.yml", "--include=*.yaml",

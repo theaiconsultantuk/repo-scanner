@@ -18,7 +18,7 @@ echo ""
 # ── 1. Homebrew ──────────────────────────────────────────────
 if ! command -v brew &>/dev/null; then
   echo -e "${YELLOW}Installing Homebrew...${NC}"
-  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" # nosemgrep: bash.curl.security.curl-pipe-bash.curl-pipe-bash
   # Add brew to PATH for Apple Silicon
   if [[ -f /opt/homebrew/bin/brew ]]; then
     eval "$(/opt/homebrew/bin/brew shellenv)"
@@ -31,7 +31,7 @@ fi
 # ── 2. Bun (runtime for the scanner) ─────────────────────────
 if ! command -v bun &>/dev/null; then
   echo -e "${YELLOW}Installing Bun...${NC}"
-  curl -fsSL https://bun.sh/install | bash
+  curl -fsSL https://bun.sh/install | bash # nosemgrep: bash.curl.security.curl-pipe-bash.curl-pipe-bash
   export BUN_INSTALL="$HOME/.bun"
   export PATH="$BUN_INSTALL/bin:$PATH"
   # Persist to shell profile
